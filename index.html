@@ -1,1 +1,47 @@
-<h1>Identificador de Artistas</h1>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Identificador de Artistas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.4/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-DQvkBjpPgn7RC31MCQoOeC9TI2kdqa4+BSgNMNj8v77fdC77Kj5zpWFTJaaAoMbC" crossorigin="anonymous">
+  </head>
+  <body>
+    
+    <div class="container">
+      <div class="row">
+        <h1 class="col-auto">Identificador de Artistas</h1>
+      </div>
+      <div class="row">
+        <!--INPUT-->
+        <form class="col-lg-6 bg-primary-subtle py-2">
+          <div class="mb-3">
+            <label for="ingresoDeArchivo" class="form-label">Seleccionar una imagen de su computadora...</label>
+            <input class="form-control" type="file" id="ingresoDeArchivo">
+          </div>
+          <div class="mb-3">
+            <label for="ingresoDeURL" class="form-label">...o pegar una URL de una imagen de internet</label>
+            <input type="url" class="form-control" id="ingresoDeURL" placeholder="https://i.imgur.com/eXaMPLe.jpeg">
+          </div>
+          <div class="row justify-content-center">
+            <button type="submit" class="btn col-6 btn-primary btn-lg">Buscar</button>
+          </div>
+        </form>
+        <!--OUTPUT-->
+        <div class="col-lg-6 bg-secondary-subtle py-2">
+          <div class="row">
+            <h3 class="col-12 col-sm-2 col-lg-3 col-xl-2">Autor:</h3>
+            <h3 class="col-12 col-sm-10 col-lg-9 col-xl-10">Nico</h3>
+            <h3 class="col-12 col-sm-2 col-lg-3 col-xl-2">Enlace:</h3>
+            <h3 class="col-12 col-sm-10 col-lg-9 col-xl-10"><a href="#">deviantart.com</a></h3>
+            <img class="col-12" src="..." alt="Imagen encontrada">
+            <p class="col-12">El algoritmo no es perfecto, así que se recomienda usar el enlace original para verificar el autor por cuenta propia.</p>
+            <p class="col-12">¿No coincide la imagen o encontró un error? Envía un correo a <a href="#">art.id@gmail.com</a> o intenta <a href="#">buscar de nuevo</a>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.4/dist/js/bootstrap.bundle.min.js" integrity="sha384-YUe2LzesAfftltw+PEaao2tjU/QATaW/rOitAq67e0CT0Zi2VVRL0oC4+gAaeBKu" crossorigin="anonymous"></script>
+  </body>
+</html>
