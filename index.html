@@ -21,10 +21,10 @@
           </div>
           <div class="mb-3">
             <label for="ingresoDeURL" class="form-label">...o pegar una URL de una imagen de internet</label>
-            <input type="url" class="form-control" id="ingresoDeURL" placeholder="https://i.imgur.com/eXaMPLe.jpeg">
+            <input class="form-control" type="url" id="ingresoDeURL" placeholder="https://i.imgur.com/eXaMPLe.jpeg">
           </div>
           <div class="row justify-content-center">
-            <button type="submit" class="btn col-6 btn-primary btn-lg">Buscar</button>
+            <button type="submit" onclick="search();" class="btn col-6 btn-primary btn-lg">Buscar</button>
           </div>
         </form>
         <!--OUTPUT-->
@@ -34,7 +34,7 @@
             <h3 class="col-12 col-sm-10 col-lg-9 col-xl-10">Nico</h3>
             <h3 class="col-12 col-sm-2 col-lg-3 col-xl-2">Enlace:</h3>
             <h3 class="col-12 col-sm-10 col-lg-9 col-xl-10"><a href="#">deviantart.com</a></h3>
-            <img class="col-12" src="..." alt="Imagen encontrada">
+            <img class="col-12" id="imagenEncontrada" src="art_id.png" alt="Imagen encontrada">
             <p class="col-12">El algoritmo no es perfecto, así que se recomienda usar el enlace original para verificar el autor por cuenta propia.</p>
             <p class="col-12">¿No coincide la imagen o encontró un error? Envía un correo a <a href="#">art.id@gmail.com</a> o intenta <a href="#">buscar de nuevo</a>.</p>
           </div>
@@ -43,5 +43,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.4/dist/js/bootstrap.bundle.min.js" integrity="sha384-YUe2LzesAfftltw+PEaao2tjU/QATaW/rOitAq67e0CT0Zi2VVRL0oC4+gAaeBKu" crossorigin="anonymous"></script>
+    <script src="logic.js"></script>
   </body>
 </html>
