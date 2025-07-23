@@ -2,6 +2,8 @@ from serpapi import GoogleSearch
 from api_key import API_KEY
 import json
 
+from identificador import get_oldest
+
 def save_example(dictionary):
     with open("example.json", "w") as f:
         json.dump(dictionary, f, indent=4)
@@ -27,8 +29,18 @@ def main():
         results = search.get_dict()
         exact_matches = results["exact_matches"]
         save_example(exact_matches)
-
+    
     #print(json.dumps(exact_matches, indent=4))
+
+    results = []
+    for match in exact_matches:
+        result = (match["source"], match["link"])
+        results.append(result)
+        print(result)
+
+    oldest = get_oldest(results)
+    print(f"Source: {oldest[0]}")
+    print(f"Link: {oldest[1]}")
 
 if __name__ == "__main__":
     main()
