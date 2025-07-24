@@ -34,13 +34,20 @@ def main():
 
     results = []
     for match in exact_matches:
-        result = (match["source"], match["link"])
+        result = {
+            "source": match["source"],
+            "link": match["link"],
+            "thumnail": match["thumbnail"]
+        }
         results.append(result)
-        print(result)
+        #print(result)
 
     oldest = get_oldest(results)
-    print(f"Source: {oldest[0]}")
-    print(f"Link: {oldest[1]}")
+    print("-------------------------------------------------")
+    print(f"Source: {oldest["source"]}")
+    print(f"Link: {oldest["link"]}")
+    print(f"Thumnail: {oldest["thumnail"]}")
+    print(f"Fecha y hora: {oldest["created_utc"]}")
 
 if __name__ == "__main__":
     main()
