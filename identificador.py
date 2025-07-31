@@ -1,23 +1,20 @@
-from source_id.reddit import obtener_fecha_post
+from fecha_scraper import obtener_fecha_publicacion
 from datetime import datetime
 
-def get_oldest(results):
-    accepted_sources = ["Reddit"]
-    filtered_results = list(filter(lambda x: x["source"] in accepted_sources, results))
-    
-    oldest = {
-        "created_utc": datetime.now()
-    }
-    for result in filtered_results:
-        if result["source"] == "Reddit":
-            result["created_utc"] = obtener_fecha_post(result["link"])
-        
+def get_sorted_dates(results):
+    publicaciones = []
+    for result in results:
         print("-----")
+        print("Obteniendo fecha de publicación...")
+        result["created_utc"] = obtener_fecha_publicacion(result["link"])
+        
+        print(f"Source: {result["source"]}")
         print(f"Link: {result["link"]}")
         print(f"Fecha y hora: {result["created_utc"]}")
 
-        if result["created_utc"] < oldest["created_utc"]:
-            oldest = result
-            print("^ MÁS VIEJO HASTA AHORA")
+        if result["created_utc"]:
+            publicaciones.append(result)
+    
+    publicaciones.sort(key=lambda x: x["created_utc"])
         
-    return oldest
+    return publicaciones
