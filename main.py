@@ -4,18 +4,8 @@ import json, sys
 
 from identificador import get_sorted_dates
 
-EXAMPLE_PATH = "devito_example.json"
-EXAMPLE_URL = "gunslinger_url.txt"
-
-def save_example(dictionary):
-    with open(EXAMPLE_PATH, "w") as f:
-        json.dump(dictionary, f, indent=4)
-
-def read_example():
-    with open(EXAMPLE_PATH, "r") as f:
-        result = json.loads(f.read())
-    
-    return result
+EXAMPLE_URL = "https://i.imgur.com/HBrB8p0.png"
+CACHE_PATH = "cache.json"
 
 def read_url(path):
     try:
@@ -25,29 +15,41 @@ def read_url(path):
     except FileNotFoundError:
         return path
 
-def main():
-    if len(sys.argv) != 2:
-        try:
-            exact_matches = read_example()
-            print("Leyendo ejemplo...")
-        except FileNotFoundError:
-            params = {
-                "engine": "google_lens",
-                "type": "exact_matches",
-                "url": read_url(EXAMPLE_URL),
-                "api_key": API_KEY
-            }
+def read_cache(url):
+    try:
+        with open(CACHE_PATH, "r") as f:
+            result = json.loads(f.read())
+        return 0, result[url]
+    except FileNotFoundError:
+        return -1, []
+    except KeyError:
+        return -2, []
 
-            print("Buscando ejemplo...")
-            search = GoogleSearch(params)
-            results = search.get_dict()
-            exact_matches = results["exact_matches"]
-            save_example(exact_matches)
+def save_cache(url, exact_matches):
+    try:
+        with open(CACHE_PATH, "r") as f:
+            result = json.loads(f.read())
+    except FileNotFoundError:
+        result = {}
+    result[url] = exact_matches
+    with open(CACHE_PATH, "w") as f:
+        json.dump(result, f, indent=4)
+
+def main():
+    url = ""
+    if len(sys.argv) != 2:
+        url = read_url(EXAMPLE_URL)
     else:
+        url = read_url(sys.argv[1])
+    
+    error, exact_matches = read_cache(url)
+    print("Leyendo del cache...")
+    if error < 0:
+        print("No se encontró en el cache")
         params = {
                 "engine": "google_lens",
                 "type": "exact_matches",
-                "url": read_url(sys.argv[1]),
+                "url": url,
                 "api_key": API_KEY
             }
 
@@ -55,8 +57,8 @@ def main():
         search = GoogleSearch(params)
         results = search.get_dict()
         exact_matches = results["exact_matches"]
-
-    #print(json.dumps(exact_matches, indent=4))
+        save_cache(url, exact_matches)
+        print("Registrado en el cache")
 
     results = []
     for match in exact_matches:
@@ -66,10 +68,9 @@ def main():
             "thumnail": match["thumbnail"]
         }
         results.append(result)
-        #print(result)
 
     publicaciones = get_sorted_dates(results)
-    top_10 = publicaciones[:9]
+    top_10 = publicaciones[:10]
     print("------------------ TOP 10 --------------------")
     for i in range(len(top_10)):
         print(f"- {i+1} -")
