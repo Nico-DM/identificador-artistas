@@ -69,3 +69,11 @@ def obtener_fecha_publicacion(url):
     except Exception as e:
         print("Error:", e)
         return None
+
+# -------------------------------
+# Ejemplo
+# -------------------------------
+if __name__ == "__main__":
+    url = "https://x.com/_Woong_Bi_/status/1940043620599603367"
+    fecha = obtener_fecha_publicacion(url)
+    print("Fecha extraída:", fecha)
