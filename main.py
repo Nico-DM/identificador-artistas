@@ -81,7 +81,7 @@ def main():
         json.dump(publicaciones, f, indent=4)
     
     top_10 = publicaciones[:10]
-    if len(top_10) <= 10:
+    if len(publicaciones) <= 10:
         print(f"---------- RESULTADOS (copiados en {OUTPUT_PATH}) ----------")
     else:
         print(f"---------- TOP 10 ({len(publicaciones)} resultados en {OUTPUT_PATH}) ----------")
