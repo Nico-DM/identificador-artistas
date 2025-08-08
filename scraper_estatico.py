@@ -58,7 +58,7 @@ def seleccionar_mejor_fecha(fechas_raw):
     puntuadas.sort(key=lambda x: (-x[1], x[0]))  # mayor puntaje y más antigua
     return puntuadas[0][0] if puntuadas else None
 
-def obtener_fecha_publicacion(url):
+def obtener_fecha_estatica(url):
     try:
         r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
         if r.status_code != 200:
@@ -66,14 +66,11 @@ def obtener_fecha_publicacion(url):
         html = r.text
         fechas_raw = obtener_fechas_candidatas(html)
         return seleccionar_mejor_fecha(fechas_raw)
-    except Exception as e:
-        print("Error:", e)
+    except Exception:
         return None
 
-# -------------------------------
-# Ejemplo
-# -------------------------------
+
 if __name__ == "__main__":
-    url = "https://x.com/_Woong_Bi_/status/1940043620599603367"
-    fecha = obtener_fecha_publicacion(url)
+    url = "https://www.deviantart.com/qoentari/art/Dnd-gunslinger-character-1061655719"
+    fecha = obtener_fecha_estatica(url)
     print("Fecha extraída:", fecha)

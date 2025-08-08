@@ -1,9 +1,6 @@
 api_key.py
 *.json
-*.ini
-*.txt
-machine_learning.md
-pipeline_fecha_imagen.py
+ignore/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

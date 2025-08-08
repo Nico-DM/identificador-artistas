@@ -1,4 +1,3 @@
-# html_interactivo.py (versión diagnóstica y más robusta)
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -189,7 +188,7 @@ def extract_from_visible_text(driver):
 # -------------------------
 def seleccionar_mejor_fecha(candidates):
     if not candidates:
-        return None, []
+        return None
 
     hoy = datetime.now()
     # filtrar rango razonable
@@ -205,7 +204,7 @@ def seleccionar_mejor_fecha(candidates):
             continue
         filtered.append(c)
     if not filtered:
-        return None, candidates
+        return None
 
     # ordenar por (prioridad, distancia_dias)
     for c in filtered:
@@ -214,12 +213,12 @@ def seleccionar_mejor_fecha(candidates):
     filtered.sort(key=lambda x: (x["priority"], x["distance_days"]))
     best = filtered[0]
     # devolver mejor y la lista completa (útil para debug)
-    return best["date"], filtered
+    return best["date"]
 
 # -------------------------
 # Función principal
 # -------------------------
-def obtener_fecha_js(url, headless=True, timeout=20, wait_for=8):
+def obtener_fecha_dinamica(url, headless=True, timeout=20, wait_for=8):
     options = Options()
     if headless:
         # dependiendo de la versión de Chrome, '--headless=new' puede funcionar; usar '--headless' por compatibilidad
@@ -272,26 +271,22 @@ def obtener_fecha_js(url, headless=True, timeout=20, wait_for=8):
         candidates += extract_from_visible_text(driver)
 
         # imprimimos las candidatas para debug
-        print(">>> Candidatas encontradas (count={}):".format(len(candidates)))
+        """
+        print(f"Candidatas encontradas (count={len(candidates)}):")
         for c in candidates:
             dstr = c["date"].isoformat() if c["date"] else "None"
-            print(f"  source={c['source']:<12} priority={c['priority']:>2} parsed={dstr:<25} raw={repr(c['raw'])[:120]}")
+            print(f"\tsource={c['source']:<12} priority={c['priority']:>2} parsed={dstr:<25} raw={repr(c['raw'])[:120]}")
+        """
 
         # removemos la información de zona horaria
         for c in candidates:
             if c["date"].tzinfo:
                 c["date"] = c["date"].astimezone(timezone.utc).replace(tzinfo=None)
 
-        mejor, aceptadas = seleccionar_mejor_fecha(candidates)
-        if mejor:
-            print(">>> Mejor fecha seleccionada:", mejor.isoformat())
-            return mejor
-        else:
-            print(">>> No se encontró una fecha válida tras filtrar (devuelto None).")
-            return None
+        mejor = seleccionar_mejor_fecha(candidates)
+        return mejor
 
-    except Exception as e:
-        print("Error general:", str(e))
+    except Exception:
         return None
     finally:
         try:
@@ -299,10 +294,8 @@ def obtener_fecha_js(url, headless=True, timeout=20, wait_for=8):
         except:
             pass
 
-# -------------------------
-# Ejemplo
-# -------------------------
+
 if __name__ == "__main__":
     url = "https://x.com/_Woong_Bi_/status/1940043620599603367"
-    fecha = obtener_fecha_js(url)
-    print("Resultado final:", fecha)
+    fecha = obtener_fecha_dinamica(url)
+    print("Fecha extraída:", fecha)

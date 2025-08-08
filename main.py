@@ -4,8 +4,9 @@ import json, sys
 
 from identificador import get_sorted_dates
 
-EXAMPLE_URL = "https://i.imgur.com/HBrB8p0.png"
+EXAMPLE_URL = "https://i.pinimg.com/originals/f8/0f/2b/f80f2bcfe71701829515ec7dcfc2a5c7.jpg"
 CACHE_PATH = "cache.json"
+OUTPUT_PATH = "output.json"
 
 def read_url(path):
     try:
@@ -36,11 +37,14 @@ def save_cache(url, exact_matches):
         json.dump(result, f, indent=4)
 
 def main():
-    url = ""
     if len(sys.argv) != 2:
-        url = read_url(EXAMPLE_URL)
-    else:
-        url = read_url(sys.argv[1])
+        print("Uso:")
+        print("\tpython3 main.py <url>")
+        print("Si la url es demasiado larga, puedes pegarla en un archivo de texto cualquiera y copiar el path:")
+        print("\tpython3 main.py <path>")
+        sys.exit()
+    
+    url = read_url(sys.argv[1])
     
     error, exact_matches = read_cache(url)
     print("Leyendo del cache...")
@@ -70,14 +74,23 @@ def main():
         results.append(result)
 
     publicaciones = get_sorted_dates(results)
+    for p in publicaciones:
+        p["created_utc"] = f"{p["created_utc"]}"
+
+    with open(OUTPUT_PATH, "w") as f:
+        json.dump(publicaciones, f, indent=4)
+    
     top_10 = publicaciones[:10]
-    print("------------------ TOP 10 --------------------")
+    if len(top_10) <= 10:
+        print(f"---------- RESULTADOS (copiados en {OUTPUT_PATH}) ----------")
+    else:
+        print(f"---------- TOP 10 ({len(publicaciones)} resultados en {OUTPUT_PATH}) ----------")
     for i in range(len(top_10)):
-        print(f"- {i+1} -")
-        print(f"Source: {top_10[i]["source"]}")
-        print(f"Link: {top_10[i]["link"]}")
-        print(f"Thumnail: {top_10[i]["thumnail"]}")
-        print(f"Fecha y hora: {top_10[i]["created_utc"]}")
+        print(f"{i+1}.\tFuente: {top_10[i]["source"]}")
+        print(f"\tLink: {top_10[i]["link"]}")
+        print(f"\tMiniatura: {top_10[i]["thumnail"]}")
+        print(f"\tFecha y hora: {top_10[i]["created_utc"]}")
+
 
 if __name__ == "__main__":
     main()
