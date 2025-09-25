@@ -1,0 +1,13 @@
+[project]
+name = "identificador-artistas"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "bs4>=0.0.2",
+    "dateparser>=1.2.2",
+    "dotenv>=0.9.9",
+    "selenium>=4.35.0",
+    "serpapi>=0.1.5",
+]

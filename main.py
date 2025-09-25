@@ -1,9 +1,13 @@
+import os
+
 from serpapi import GoogleSearch
-from api_key import API_KEY
+from dotenv import load_dotenv
 import json, sys
 
 from identificador import get_sorted_dates
 
+load_dotenv()
+API_KEY = os.environ.get("SERPAPI_API_KEY")
 EXAMPLE_URL = "https://i.pinimg.com/originals/f8/0f/2b/f80f2bcfe71701829515ec7dcfc2a5c7.jpg"
 CACHE_PATH = "cache.json"
 OUTPUT_PATH = "output.json"
