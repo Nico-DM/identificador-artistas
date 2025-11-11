@@ -44,6 +44,7 @@ def main():
     if len(sys.argv) != 2:
         print("Uso:")
         print("\tpython3 main.py <url>")
+        print()
         print("Si la url es demasiado larga, puedes pegarla en un archivo de texto cualquiera y copiar el path:")
         print("\tpython3 main.py <path>")
         sys.exit()
