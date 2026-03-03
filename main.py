@@ -48,13 +48,17 @@ def main():
         print("Si la url es demasiado larga, puedes pegarla en un archivo de texto cualquiera y copiar el path:")
         print("\tpython3 main.py <path>")
         sys.exit()
-    
+
+    if not API_KEY:
+        print("Falta SERPAPI_API_KEY en el entorno. Configurala antes de ejecutar.")
+        sys.exit(1)
+
     url = read_url(sys.argv[1])
-    
+
     error, exact_matches = read_cache(url)
     print("Leyendo del cache...")
     if error < 0:
-        print("No se encontró en el cache")
+        print("No se encontro en el cache")
         params = {
                 "engine": "google_lens",
                 "type": "exact_matches",
@@ -74,27 +78,27 @@ def main():
         result = {
             "source": match["source"],
             "link": match["link"],
-            "thumnail": match["thumbnail"]
+            "thumbnail": match["thumbnail"],
         }
         results.append(result)
 
     publicaciones = get_sorted_dates(results)
     for p in publicaciones:
-        p["created_utc"] = f"{p["created_utc"]}"
+        p["created_utc"] = f"{p['created_utc']}"
 
     with open(OUTPUT_PATH, "w") as f:
         json.dump(publicaciones, f, indent=4)
-    
+
     top_10 = publicaciones[:10]
     if len(publicaciones) <= 10:
         print(f"---------- RESULTADOS (copiados en {OUTPUT_PATH}) ----------")
     else:
         print(f"---------- TOP 10 ({len(publicaciones)} resultados en {OUTPUT_PATH}) ----------")
     for i in range(len(top_10)):
-        print(f"{i+1}.\tFuente: {top_10[i]["source"]}")
-        print(f"\tLink: {top_10[i]["link"]}")
-        print(f"\tMiniatura: {top_10[i]["thumnail"]}")
-        print(f"\tFecha y hora: {top_10[i]["created_utc"]}")
+        print(f"{i+1}.\tFuente: {top_10[i]['source']}")
+        print(f"\tLink: {top_10[i]['link']}")
+        print(f"\tMiniatura: {top_10[i]['thumbnail']}")
+        print(f"\tFecha y hora: {top_10[i]['created_utc']}")
 
 
 if __name__ == "__main__":

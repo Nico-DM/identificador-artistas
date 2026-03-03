@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 import re
 import dateparser
 from datetime import datetime, timezone
+from typing import List
+
+from modelos import DateCandidate
 
 def obtener_fechas_candidatas(html):
     soup = BeautifulSoup(html, "html.parser")
@@ -39,35 +42,52 @@ def obtener_fechas_candidatas(html):
 
     return fechas
 
-def seleccionar_mejor_fecha(fechas_raw):
+def seleccionar_mejor_fecha(candidates: List[DateCandidate]):
     puntuadas = []
-    for texto, fuente in fechas_raw:
-        fecha = dateparser.parse(texto)
-        if fecha:
-            fecha_sin_tz = fecha.astimezone(timezone.utc).replace(tzinfo=None) if fecha.tzinfo else fecha
-            if fecha_sin_tz <= datetime.now():
-                puntaje = 0
-                if "published" in fuente or "datePublished" in fuente:
-                    puntaje += 3
-                if "meta" in fuente:
-                    puntaje += 2
-                if "time" in fuente:
-                    puntaje += 1
-                puntuadas.append((fecha_sin_tz, puntaje))
+    for c in candidates:
+        fecha = c.date
+        fecha_sin_tz = fecha.astimezone(timezone.utc).replace(tzinfo=None) if fecha.tzinfo else fecha
+        if fecha_sin_tz <= datetime.now():
+            puntaje = 0
+            if "published" in c.source or "datePublished" in c.source:
+                puntaje += 3
+            if "meta" in c.source:
+                puntaje += 2
+            if "time" in c.source:
+                puntaje += 1
+            puntuadas.append((fecha_sin_tz, puntaje))
 
-    puntuadas.sort(key=lambda x: (-x[1], x[0]))  # mayor puntaje y más antigua
+    puntuadas.sort(key=lambda x: (-x[1], x[0]))  # mayor puntaje y mas antigua
     return puntuadas[0][0] if puntuadas else None
 
-def obtener_fecha_estatica(url):
+def obtener_candidatas_estaticas(url: str) -> List[DateCandidate]:
     try:
         r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
         if r.status_code != 200:
-            return None
+            return []
         html = r.text
         fechas_raw = obtener_fechas_candidatas(html)
-        return seleccionar_mejor_fecha(fechas_raw)
+        candidates: List[DateCandidate] = []
+        for texto, fuente in fechas_raw:
+            fecha = dateparser.parse(texto)
+            if not fecha:
+                continue
+            candidates.append(
+                DateCandidate(
+                    date=fecha,
+                    source=fuente,
+                    raw=texto,
+                    extractor="static",
+                    url=url,
+                )
+            )
+        return candidates
     except Exception:
-        return None
+        return []
+
+def obtener_fecha_estatica(url):
+    candidates = obtener_candidatas_estaticas(url)
+    return seleccionar_mejor_fecha(candidates)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,9 @@ from dateutil import parser
 from datetime import datetime, timezone
 from bs4 import BeautifulSoup
 import re, json, time
+from typing import List
+
+from modelos import DateCandidate
 
 ISO_DATETIME_RE = re.compile(
     r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+\-]\d{2}:?\d{2})?"
@@ -37,15 +40,23 @@ def _try_parse_date(text):
         except Exception:
             return None
 
-def _add_candidate(candidates, date_obj, source, raw):
+def _add_candidate(candidates, date_obj, source, raw, url):
     if date_obj is None:
         return
-    candidates.append({"date": date_obj, "source": source, "raw": raw, "priority": SOURCE_PRIORITY.get(source, 99)})
+    candidates.append(
+        DateCandidate(
+            date=date_obj,
+            source=source,
+            raw=raw,
+            extractor="dynamic",
+            url=url,
+        )
+    )
 
 # -------------------------
 # Buscar time / meta elements
 # -------------------------
-def extract_from_dom(driver):
+def extract_from_dom(driver, url):
     candidates = []
     selectors_time = [
         'time[datetime]',
@@ -60,7 +71,7 @@ def extract_from_dom(driver):
             for e in elems:
                 dt = e.get_attribute("datetime") or e.get_attribute("dateTime") or e.text
                 parsed = _try_parse_date(dt) if dt else None
-                _add_candidate(candidates, parsed, "time", dt)
+                _add_candidate(candidates, parsed, "time", dt, url)
         except Exception:
             continue
 
@@ -81,7 +92,7 @@ def extract_from_dom(driver):
             for e in elems:
                 content = e.get_attribute("content") or e.get_attribute("value") or e.text
                 parsed = _try_parse_date(content) if content else None
-                _add_candidate(candidates, parsed, "meta", content)
+                _add_candidate(candidates, parsed, "meta", content, url)
         except Exception:
             continue
 
@@ -90,7 +101,7 @@ def extract_from_dom(driver):
 # -------------------------
 # Buscar JSON/ld+json en <script>
 # -------------------------
-def extract_dates_from_scripts(driver):
+def extract_dates_from_scripts(driver, url):
     candidates = []
     soup = BeautifulSoup(driver.page_source, "html.parser")
     scripts = soup.find_all("script")
@@ -99,17 +110,17 @@ def extract_dates_from_scripts(driver):
         if not text or text.strip() == "":
             continue
 
-        # saltar scripts de cookies / trackers que contienen fechas de expiración
+        # saltar scripts de cookies / trackers que contienen fechas de expiracion
         low = text.lower()
         if "document.cookie" in low or "expires=" in low or "max-age" in low or "setcookie" in low:
             continue
 
-        # ld+json típicos
+        # ld+json tipicos
         if script.get("type") == "application/ld+json": # type: ignore
             try:
                 parsed_json = json.loads(text)
             except Exception:
-                # intentar reparar arrays múltiples (no crítico)
+                # intentar reparar arrays multiples (no critico)
                 try:
                     parsed_json = json.loads("[" + text + "]")
                 except Exception:
@@ -127,12 +138,12 @@ def extract_dates_from_scripts(driver):
                                 # claves que habitualmente almacenan fecha
                                 if k.lower() in ("datepublished", "uploaddate", "datecreated", "datepublished"):
                                     d = _try_parse_date(v)
-                                    _add_candidate(candidates, d, "ld+json", v)
+                                    _add_candidate(candidates, d, "ld+json", v, url)
                                 else:
-                                    # también intentar si la cadena parece ISO
+                                    # tambien intentar si la cadena parece ISO
                                     if ISO_DATETIME_RE.search(v) or ISO_DATE_RE.search(v):
                                         d = _try_parse_date(v)
-                                        _add_candidate(candidates, d, "ld+json", v)
+                                        _add_candidate(candidates, d, "ld+json", v, url)
                     elif isinstance(node, list):
                         for it in node:
                             if isinstance(it, (dict, list)):
@@ -140,7 +151,7 @@ def extract_dates_from_scripts(driver):
                             elif isinstance(it, str):
                                 if ISO_DATETIME_RE.search(it) or ISO_DATE_RE.search(it):
                                     d = _try_parse_date(it)
-                                    _add_candidate(candidates, d, "ld+json", it)
+                                    _add_candidate(candidates, d, "ld+json", it, url)
             continue
 
         # si no es ld+json, buscar claves tipo "datePublished" dentro del texto (JSON incrustado)
@@ -149,20 +160,20 @@ def extract_dates_from_scripts(driver):
             matches = re.findall(r'"(?:datePublished|uploadDate|created_at|dateCreated)"\s*:\s*"([^"]+)"', text)
             for m in matches:
                 d = _try_parse_date(m)
-                _add_candidate(candidates, d, "script-json", m)
+                _add_candidate(candidates, d, "script-json", m, url)
 
-            # también buscar ISO en el script si no hay matches
+            # tambien buscar ISO en el script si no hay matches
             iso_matches = ISO_DATETIME_RE.findall(text) + ISO_DATE_RE.findall(text)
             for m in iso_matches:
                 d = _try_parse_date(m)
-                _add_candidate(candidates, d, "script-regex", m)
+                _add_candidate(candidates, d, "script-regex", m, url)
 
     return candidates
 
 # -------------------------
 # Buscar en texto visible (limpiando scripts/styles)
 # -------------------------
-def extract_from_visible_text(driver):
+def extract_from_visible_text(driver, url):
     candidates = []
     soup = BeautifulSoup(driver.page_source, "html.parser")
     for tag in soup(["script", "style", "noscript"]):
@@ -171,22 +182,22 @@ def extract_from_visible_text(driver):
     # buscar patrones
     for m in ISO_DATETIME_RE.findall(texto):
         d = _try_parse_date(m)
-        _add_candidate(candidates, d, "visible-text", m)
+        _add_candidate(candidates, d, "visible-text", m, url)
     for m in ISO_DATE_RE.findall(texto):
         d = _try_parse_date(m)
-        _add_candidate(candidates, d, "visible-text", m)
+        _add_candidate(candidates, d, "visible-text", m, url)
     for m in VERBOSE_DATE_RE.findall(texto):
         d = _try_parse_date(m)
-        _add_candidate(candidates, d, "visible-text", m)
+        _add_candidate(candidates, d, "visible-text", m, url)
     for m in GENERIC_DATE_RE.findall(texto):
         d = _try_parse_date(m)
-        _add_candidate(candidates, d, "visible-text", m)
+        _add_candidate(candidates, d, "visible-text", m, url)
     return candidates
 
 # -------------------------
 # Seleccionar mejor fecha con prioridad + distancia a hoy
 # -------------------------
-def seleccionar_mejor_fecha(candidates):
+def seleccionar_mejor_fecha(candidates: List[DateCandidate]):
     if not candidates:
         return None
 
@@ -194,7 +205,7 @@ def seleccionar_mejor_fecha(candidates):
     # filtrar rango razonable
     filtered = []
     for c in candidates:
-        d = c["date"]
+        d = c.date
         if d is None:
             continue
         if d.year < 2000:
@@ -208,20 +219,20 @@ def seleccionar_mejor_fecha(candidates):
 
     # ordenar por (prioridad, distancia_dias)
     for c in filtered:
-        c["distance_days"] = abs((hoy - c["date"]).days)
+        c_distance = abs((hoy - c.date).days)
+        c.flags["distance_days"] = c_distance
 
-    filtered.sort(key=lambda x: (x["priority"], x["distance_days"]))
+    filtered.sort(key=lambda x: (SOURCE_PRIORITY.get(x.source, 99), x.flags.get("distance_days", 0)))
     best = filtered[0]
-    # devolver mejor y la lista completa (útil para debug)
-    return best["date"]
+    return best
 
 # -------------------------
 # Función principal
 # -------------------------
-def obtener_fecha_dinamica(url, headless=True, timeout=20, wait_for=8):
+def obtener_candidatas_dinamicas(url, headless=True, timeout=20, wait_for=8) -> List[DateCandidate]:
     options = Options()
     if headless:
-        # dependiendo de la versión de Chrome, '--headless=new' puede funcionar; usar '--headless' por compatibilidad
+        # dependiendo de la version de Chrome, '--headless=new' puede funcionar; usar '--headless' por compatibilidad
         options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -237,7 +248,7 @@ def obtener_fecha_dinamica(url, headless=True, timeout=20, wait_for=8):
     # menor: aumentar timeouts si el sitio es lento
     driver.set_page_load_timeout(timeout)
 
-    # ejecutar un pequeño script para ocultar webdriver
+    # ejecutar un pequeno script para ocultar webdriver
     try:
         driver.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
@@ -264,35 +275,32 @@ def obtener_fecha_dinamica(url, headless=True, timeout=20, wait_for=8):
 
         candidates = []
         # 1) DOM (time/meta) - alta prioridad
-        candidates += extract_from_dom(driver)
+        candidates += extract_from_dom(driver, url)
         # 2) scripts JSON / ld+json
-        candidates += extract_dates_from_scripts(driver)
-        # 3) texto visible (solo si no encontramos nada) — pero lo recolectamos de todos modos para debug
-        candidates += extract_from_visible_text(driver)
+        candidates += extract_dates_from_scripts(driver, url)
+        # 3) texto visible
+        candidates += extract_from_visible_text(driver, url)
 
-        # imprimimos las candidatas para debug
-        """
-        print(f"Candidatas encontradas (count={len(candidates)}):")
+        # removemos la informacion de zona horaria
         for c in candidates:
-            dstr = c["date"].isoformat() if c["date"] else "None"
-            print(f"\tsource={c['source']:<12} priority={c['priority']:>2} parsed={dstr:<25} raw={repr(c['raw'])[:120]}")
-        """
+            if c.date.tzinfo:
+                c.date = c.date.astimezone(timezone.utc).replace(tzinfo=None)
 
-        # removemos la información de zona horaria
-        for c in candidates:
-            if c["date"].tzinfo:
-                c["date"] = c["date"].astimezone(timezone.utc).replace(tzinfo=None)
-
-        mejor = seleccionar_mejor_fecha(candidates)
-        return mejor
+        return candidates
 
     except Exception:
-        return None
+        return []
     finally:
         try:
             driver.quit()
-        except:
+        except Exception:
             pass
+
+
+def obtener_fecha_dinamica(url, headless=True, timeout=20, wait_for=8):
+    candidates = obtener_candidatas_dinamicas(url, headless=headless, timeout=timeout, wait_for=wait_for)
+    best = seleccionar_mejor_fecha(candidates)
+    return best.date if best else None
 
 
 if __name__ == "__main__":
